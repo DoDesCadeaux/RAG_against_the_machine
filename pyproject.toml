@@ -1,0 +1,19 @@
+[project]
+name = "rag"
+version = "0.1.0"
+description = "Un système RAG haute performance pour le dépôt vLLM"
+readme = "README.md"
+requires-python = "==3.12.12"
+dependencies = [
+    "pydantic>=2.0",
+    "python-fire",
+    "tqdm",
+    "bm25",
+]
+
+
+[dependency-groups]
+dev = [
+    "flake8",
+    "mypy"
+]
