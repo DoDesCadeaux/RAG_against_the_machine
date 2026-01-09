@@ -73,5 +73,4 @@ class App:
 
 
 def main() -> None:
-    app = App()
-    fire.Fire(app)
+    fire.Fire(App())
