@@ -2,7 +2,7 @@ import fire
 import json
 from pathlib import Path
 from pydantic import ValidationError
-from .models import RagDataset
+from .models import RagDataset, StudentSearchResults, MinimalSearchResults
 
 
 class App:
@@ -10,8 +10,15 @@ class App:
         """Tiny command to verify the CLI works"""
         print(f"hello {name}")
 
-    def validate_dataset(self, dataset_path: str) -> None:
-        """Load a dataset JSON file and validate it with Pydantic"""
+    def _validate_dataset(self, dataset_path: str) -> RagDataset:
+        """Validate a RAG dataset JSON file.
+
+        Args:
+            dataset_path: Path to a JSON file matching RagDataset schema.
+
+        Raises:
+            RuntimeError: If the file can't be read, JSON is invalid, or schema validation fails.
+        """
         path = Path(dataset_path)
 
         try:
@@ -26,6 +33,43 @@ class App:
             raise RuntimeError(f"Dataset schema error: {path}\n{e}") from e
 
         print(f"OK: {len(dataset.rag_questions)} questions loaded")
+        return dataset
+
+    def search_dataset(self, dataset_path: str, k: int | None = None, save_directory: str | None = None) -> None:
+        try:
+            dataset = self._validate_dataset(dataset_path)
+        except RuntimeError as e:
+            raise RuntimeError("Error Validation Dataset") from e
+
+        if isinstance(save_directory, str):
+            try:
+                results: list[MinimalSearchResults] = []
+                for q in dataset.rag_questions:
+                    results.append(
+                        MinimalSearchResults(
+                            question_id=q.question_id,
+                            question=q.question,
+                            retrieved_sources=[]
+                        )
+                    )
+
+                minimal_search_result = {
+                    "search_results": results,
+                    "k": k
+                }
+
+                out = StudentSearchResults(search_results=minimal_search_result["search_results"], k=k)
+                input_name = Path(dataset_path).name
+                output_path = Path(save_directory) / input_name
+                Path(save_directory).mkdir(parents=True, exist_ok=True)
+                output_path.write_text(out.model_dump_json(indent=4), encoding="utf-8")
+            except TypeError as e:
+                raise RuntimeError("JSON Serialisation Error") from e
+            except ValidationError as e:
+                raise RuntimeError("StudentSearchResults model Validation failed") from e
+            except (PermissionError, IsADirectoryError, OSError) as e:
+                raise RuntimeError("File writing error") from e
+            print(f"Output JSON : {out}")
 
 
 def main() -> None:
