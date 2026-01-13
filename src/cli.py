@@ -35,7 +35,7 @@ class App:
         print(f"OK: {len(dataset.rag_questions)} questions loaded")
         return dataset
 
-    def search_dataset(self, dataset_path: str, k: int = 10, save_dir: str = "data/outputs/search_results") -> None:
+    def search_dataset(self, dataset_path: str, k: int = 10, save_dir: str = "data/output/search_results") -> None:
         try:
             dataset = self._validate_dataset(dataset_path)
         except RuntimeError as e:
@@ -65,10 +65,9 @@ class App:
                 raise RuntimeError("File writing error") from e
             print(f"Output JSON : {out}")
 
-            with open("data/outputs/search_results/tmp.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-                print(data)
+            data = json.loads(output_path.read_text(encoding="utf-8"))
+            print(data)
 
 
 def main() -> None:
-    fire.Fire(App())
+    fire.Fire(App)
