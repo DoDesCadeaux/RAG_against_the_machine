@@ -35,13 +35,13 @@ class App:
         print(f"OK: {len(dataset.rag_questions)} questions loaded")
         return dataset
 
-    def search_dataset(self, dataset_path: str, k: int | None = None, save_directory: str | None = None) -> None:
+    def search_dataset(self, dataset_path: str, k: int = 10, save_dir: str = "data/outputs/search_results") -> None:
         try:
             dataset = self._validate_dataset(dataset_path)
         except RuntimeError as e:
             raise RuntimeError("Error Validation Dataset") from e
 
-        if isinstance(save_directory, str):
+        if isinstance(save_dir, str):
             try:
                 results: list[MinimalSearchResults] = []
                 for q in dataset.rag_questions:
@@ -53,15 +53,9 @@ class App:
                         )
                     )
 
-                minimal_search_result = {
-                    "search_results": results,
-                    "k": k
-                }
-
-                out = StudentSearchResults(search_results=minimal_search_result["search_results"], k=k)
-                input_name = Path(dataset_path).name
-                output_path = Path(save_directory) / input_name
-                Path(save_directory).mkdir(parents=True, exist_ok=True)
+                out = StudentSearchResults(search_results=results, k=k)
+                output_path = Path(save_dir) / Path(dataset_path).name
+                Path(save_dir).mkdir(parents=True, exist_ok=True)
                 output_path.write_text(out.model_dump_json(indent=4), encoding="utf-8")
             except TypeError as e:
                 raise RuntimeError("JSON Serialisation Error") from e
@@ -70,6 +64,10 @@ class App:
             except (PermissionError, IsADirectoryError, OSError) as e:
                 raise RuntimeError("File writing error") from e
             print(f"Output JSON : {out}")
+
+            with open("data/outputs/search_results/tmp.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                print(data)
 
 
 def main() -> None:

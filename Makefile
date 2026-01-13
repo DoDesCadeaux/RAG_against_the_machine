@@ -19,6 +19,9 @@ clean:
 	rm -rf .venv .mypy_cache .uv
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 
+clean-results:
+	rm -rf data/outputs
+
 run:
 	uv run python -m src hello --name=Dorian
 
